@@ -1,0 +1,49 @@
+#Lab9.2
+# Load necessary libraries
+install.packages("mltools")
+library(caret)
+library(dplyr)
+library(data.table)
+library(mltools)
+
+#9. 2. 1. Split data into train and test
+# Load the dataset
+data <- read.csv(file.choose())
+
+# Check data for issues
+cat("Number of missing values:", sum(is.na(data)), "\n")
+cat("Unique values in the target column:", unique(data$target), "\n")
+
+# Split data into train and test sets
+set.seed(42)  # For reproducibility
+trainIndex <- createDataPartition(data$revenue, p = 0.8, list = FALSE)
+train_data <- data[trainIndex, ]
+test_data <- data[-trainIndex, ]
+
+# 9. 2. 2 Encode your target and other variables accordingly (Lesson9_Data_Encoding.nb)
+# Encode the target variable as numeric
+train_data$revenue_encoded <- as.numeric(factor(train_data$revenue))
+test_data$revenue_encoded <- as.numeric(factor(test_data$revenue))
+
+# Identify categorical columns
+categorical_cols <- names(train_data)[sapply(train_data, is.character)]
+
+# Check if there are categorical columns
+if (length(categorical_cols) > 0) {
+  # Apply One-Hot Encoding
+  train_data_encoded <- one_hot(as.data.table(train_data), cols = categorical_cols)
+  test_data_encoded <- one_hot(as.data.table(test_data), cols = categorical_cols)
+} else {
+  train_data_encoded <- as.data.table(train_data)
+  test_data_encoded <- as.data.table(test_data)
+}
+
+# Align train and test columns to ensure compatibility
+common_cols <- intersect(names(train_data_encoded), names(test_data_encoded))
+train_data_final <- train_data_encoded[, ..common_cols]
+test_data_final <- test_data_encoded[, ..common_cols]
+
+# 9. 2. 3. Check dim of your encoded train and test set. Should be the same number of variables.
+cat("Train set dimensions:", dim(train_data_final), "\n")
+cat("Test set dimensions:", dim(test_data_final), "\n")
+stopifnot(ncol(train_data_final) == ncol(test_data_final))

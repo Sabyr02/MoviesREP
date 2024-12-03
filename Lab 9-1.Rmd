@@ -1,0 +1,123 @@
+```{r}
+# Loading necessary libraries
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# Loading data
+data <- read.csv(file.choose())
+```
+
+```{r}
+# Visualizing data before cleaning
+ggplot(data, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.5, fill = "lightblue", color = "black") +
+  labs(title = "Distribution of vote_average before cleaning", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+# Removing NA values
+data_clean <- na.omit(data)
+```
+
+```{r}
+# Visualizing data after removing NA values
+ggplot(data_clean, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.5, fill = "lightgreen", color = "black") +
+  labs(title = "Distribution of vote_average after removing NA values", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+# Removing outliers (e.g., for the "vote_average" column)
+Q1 <- quantile(data_clean$vote_average, 0.25)
+Q3 <- quantile(data_clean$vote_average, 0.75)
+IQR <- Q3 - Q1
+```
+
+```{r}
+# Defining bounds for outliers
+lower_bound <- Q1 - 1.5 * IQR
+upper_bound <- Q3 + 1.5 * IQR
+```
+
+```{r}
+# Removing outliers
+data_clean <- data_clean[data_clean$vote_average >= lower_bound & data_clean$vote_average <= upper_bound, ]
+```
+
+```{r}
+# Visualizing data after removing outliers
+ggplot(data_clean, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.5, fill = "lightcoral", color = "black") +
+  labs(title = "Distribution of vote_average after removing outliers", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+# Setting a random seed for reproducibility
+set.seed(123)
+```
+
+```{r}
+# Splitting data into training and testing sets (70% for training and 30% for testing)
+train_index <- sample(1:nrow(data_clean), 0.7 * nrow(data_clean))
+train_data <- data_clean[train_index, ]
+test_data <- data_clean[-train_index, ]
+```
+
+```{r}
+# Checking the sizes of the sets
+cat("Training set size:", nrow(train_data), "\n")
+cat("Testing set size:", nrow(test_data), "\n")
+```
+
+```{r}
+# Visualizing the data split into training and testing sets
+ggplot(data_clean, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.5, fill = "lightblue", color = "black") +
+  labs(title = "Distribution of vote_average before splitting", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(train_data, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.5, fill = "lightgreen", color = "black") +
+  labs(title = "Distribution of vote_average in the training set", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(test_data, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.5, fill = "lightcoral", color = "black") +
+  labs(title = "Distribution of vote_average in the testing set", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+# Saving the cleaned data
+write.csv(data_clean, "cleaned_data.csv", row.names = FALSE)
+```
+
+```{r}
+# Saving the training and testing sets
+write.csv(train_data, "train_data.csv", row.names = FALSE)
+write.csv(test_data, "test_data.csv", row.names = FALSE)
+```
+
+# тестово сделали
+```{r}
+ggplot(train_data, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.2, fill = "lightgreen", color = "black") +
+  labs(title = "Training set", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(test_data, aes(x = vote_average)) +
+  geom_histogram(binwidth = 0.2, fill = "lightcoral", color = "black") +
+  labs(title = "Testing set", x = "vote_average", y = "Frequency") +
+  theme_minimal()
+```

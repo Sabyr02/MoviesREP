@@ -1,0 +1,166 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+# Install necessary packages
+install.packages("tidyverse")  # Install tidyverse package
+install.packages("tidyr")      # Install tidyr package
+install.packages("dplyr")      # Install dplyr package
+install.packages("readxl")     # Install readxl package
+```
+```{r}
+# Load libraries
+library(tidyverse)  
+library(readxl)      
+library(tidyr)       
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(mice)
+```
+```{r}
+# Read your dataset
+setwd('C://Users//Sabyr//Documents')
+data1 <- read_csv("TMDB_all_movies.csv")
+data1 <- data1 %>%
+  select(-id, -imdb_id, -original_title, -overview, -tagline, -cast, -director_of_photography, -writers, -producers, -music_composer, -poster_path) %>%
+  select(-imdb_votes, -imdb_rating) %>%
+  select(-production_companies) %>%
+  select(-spoken_languages, -director)
+```
+```{r}
+# Identify numeric columns
+numeric_cols <- sapply(data1, is.numeric)
+numeric_data <- data1[, numeric_cols]
+
+# Identify columns with missing values
+na_columns <- sapply(numeric_data, function(x) sum(is.na(x)) > 0)
+na_columns <- names(na_columns[na_columns])
+
+# Filter numeric data to include only columns with missing values
+numeric_data_na <- numeric_data[, na_columns]
+```
+```{r}
+# Create a 1% sample of the rows
+set.seed(882)  # For reproducibility
+sample_size <- round(nrow(numeric_data_na))  # 1% of the rows
+numeric_data_sample <- numeric_data_na[sample(nrow(numeric_data_na), sample_size), ]
+```
+```{r}
+# Apply different methods to handle missing values only for columns with missing values
+
+# Method 1: Remove NA
+data_remove <- na.omit(numeric_data_sample)
+```
+
+```{r}
+# Method 2: Replace NA with median
+data_median <- numeric_data_sample
+data_median[, na_columns] <- sapply(data_median[, na_columns], function(x) ifelse(is.na(x), median(x, na.rm = TRUE), x))
+```
+```{r}
+# Method 3: Replace NA with mode
+mode_val <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+data_mode <- numeric_data_sample
+data_mode[, na_columns] <- sapply(data_mode[, na_columns], function(x) ifelse(is.na(x), mode_val(na.omit(x)), x))
+```
+
+```{r}
+# Method 4: Replace NA with mean
+data_mean <- numeric_data_sample
+data_mean[, na_columns] <- sapply(data_mean[, na_columns], function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x))
+```
+
+```{r}
+# Method 5: MICE
+data_mice <- complete(mice(numeric_data_sample, method = "pmm", m = 1))
+```
+
+```{r}
+# Create a comparison data frame
+methods <- c("remove", "median", "mode", "mean", "mice")
+results <- list(data_remove, data_median, data_mode, data_mean, data_mice)
+
+# Combine results into a single data frame
+comparison_data <- do.call(rbind, lapply(methods, function(method) {
+  result <- results[[which(methods == method)]]
+  result$Method <- method
+  result
+}))
+```
+```{r}
+# Melt the data for ggplot2
+comparison_data_melted <- melt(comparison_data, id.vars = "Method")
+rm(numeric_data)
+rm(data_mean)
+rm(data_median)
+rm(results)
+rm(data_mode)
+rm(data_remove)
+rm(numeric_data_sample)
+rm(comparison_data)
+rm(numeric_data_na)
+```
+
+```{r}
+# Create a comparison plot
+ggplot(comparison_data_melted, aes(x = Method, y = value, fill = Method)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free") +
+  ggtitle("Comparison of Missing Value Imputation Methods") +
+  xlab("Method") +
+  ylab("Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+# chose MICE
+rm(comparison_data_melted)
+```
+```{r}
+sample_size <- round(nrow(data1))
+data_sample <- data1[sample(nrow(data1), sample_size), ]
+# Ensure release_date is a Date object
+data_sample$release_date <- as.Date(data_sample$release_date)
+
+# Convert Date to numeric (number of days since 1970-01-01)
+data_sample$release_date_numeric <- as.numeric(data_sample$release_date)
+
+data_sample <- data_sample %>% select(-release_date)
+
+# Run the mice imputation on the numeric version
+data_mice_numeric <- complete(mice(data_sample, method = "pmm", m = 1))
+
+# Convert numeric back to Date
+data_mice_numeric$release_date <- as.Date(data_mice_numeric$release_date_numeric, origin = "1970-01-01")
+
+# Remove the numeric column
+data_mice_numeric$release_date_numeric <- NULL
+
+# Assign the completed data to data_mice
+data_mice <- data_mice_numeric
+
+# Remove unnecessary objects
+rm(data1)
+rm(data_sample)
+rm(data_mice_numeric)
+```
+```{r}
+na_counts <- sapply(data_mice, function(x) sum(is.na(x)))
+print(na_counts)
+data_mice <- na.omit(data_mice)
+```
+
+```{r}
+setwd('C://Users//Sabyr//Documents')
+# Save the imputed dataset as a CSV file
+write.csv(data_mice, file = "data_mice.csv", row.names = FALSE)
+```
+
+

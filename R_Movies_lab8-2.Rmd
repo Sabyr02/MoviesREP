@@ -1,0 +1,374 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+```{r}
+path <- file.choose()
+
+data <- read.csv(path)
+rm(path)
+```
+```{r}
+# Extract unique values from the original_language column
+unique_langs <- unique(data$original_language)
+print(unique_langs)
+```
+```{r}
+# Define a mapping of language codes to regions
+language_to_region <- c(
+  "en" = "North America",
+  "es" = "South America",
+  "fr" = "Europe",
+  "de" = "Europe",
+  "zh" = "Asia",
+  "ja" = "Asia",
+  "ru" = "Europe",
+  "it" = "Europe",
+  "pt" = "South America",
+  "ar" = "Middle East",
+  "hi" = "Asia",
+  "ko" = "Asia",
+  "tr" = "Europe",
+  "nl" = "Europe",
+  "pl" = "Europe",
+  "sv" = "Europe",
+  "vi" = "Asia",
+  "th" = "Asia",
+  "id" = "Asia",
+  "fa" = "Middle East",
+  "he" = "Middle East",
+  "el" = "Europe",
+  "da" = "Europe",
+  "fi" = "Europe",
+  "no" = "Europe",
+  "cs" = "Europe",
+  "hu" = "Europe",
+  "ro" = "Europe",
+  "sk" = "Europe",
+  "bg" = "Europe",
+  "uk" = "Europe",
+  "hr" = "Europe",
+  "sr" = "Europe",
+  "sl" = "Europe",
+  "et" = "Europe",
+  "lt" = "Europe",
+  "lv" = "Europe",
+  "mk" = "Europe",
+  "bs" = "Europe",
+  "sq" = "Europe",
+  "hy" = "Asia",
+  "ka" = "Asia",
+  "az" = "Asia",
+  "be" = "Europe",
+  "kk" = "Asia",
+  "ky" = "Asia",
+  "mn" = "Asia",
+  "uz" = "Asia",
+  "ps" = "Middle East",
+  "sd" = "Asia",
+  "ur" = "Asia",
+  "bn" = "Asia",
+  "gu" = "Asia",
+  "mr" = "Asia",
+  "ta" = "Asia",
+  "te" = "Asia",
+  "kn" = "Asia",
+  "ml" = "Asia",
+  "ne" = "Asia",
+  "si" = "Asia",
+  "pa" = "Asia",
+  "as" = "Asia",
+  "or" = "Asia",
+  "my" = "Asia",
+  "km" = "Asia",
+  "lo" = "Asia",
+  "ti" = "Africa",
+  "am" = "Africa",
+  "sw" = "Africa",
+  "yo" = "Africa",
+  "ig" = "Africa",
+  "ha" = "Africa",
+  "zu" = "Africa",
+  "xh" = "Africa",
+  "st" = "Africa",
+  "tn" = "Africa",
+  "ss" = "Africa",
+  "ts" = "Africa",
+  "ve" = "Africa",
+  "ny" = "Africa",
+  "lg" = "Africa",
+  "rw" = "Africa",
+  "sn" = "Africa",
+  "wo" = "Africa",
+  "ff" = "Africa",
+  "bm" = "Africa",
+  "ln" = "Africa",
+  "kg" = "Africa",
+  "lu" = "Africa",
+  "ak" = "Africa",
+  "ee" = "Africa",
+  "ga" = "Europe",
+  "gd" = "Europe",
+  "gv" = "Europe",
+  "kw" = "Europe",
+  "br" = "Europe",
+  "co" = "Europe",
+  "fo" = "Europe",
+  "fy" = "Europe",
+  "gl" = "Europe",
+  "io" = "Europe",
+  "ia" = "Europe",
+  "ie" = "Europe",
+  "oc" = "Europe",
+  "qu" = "South America",
+  "rm" = "Europe",
+  "sc" = "Europe",
+  "so" = "Africa",
+  "su" = "Asia",
+  "tg" = "Asia",
+  "tk" = "Asia",
+  "tt" = "Asia",
+  "ug" = "Asia",
+  "yi" = "Europe",
+  "yo" = "Africa",
+  "za" = "Asia",
+  "zu" = "Africa",
+  "ab" = "Asia",
+  "ae" = "Asia",
+  "ak" = "Africa",
+  "an" = "Europe",
+  "av" = "Asia",
+  "ay" = "South America",
+  "ba" = "Asia",
+  "bi" = "Oceania",
+  "ch" = "Oceania",
+  "cr" = "North America",
+  "dv" = "Asia",
+  "dz" = "Asia",
+  "ee" = "Africa",
+  "ff" = "Africa",
+  "fj" = "Oceania",
+  "ho" = "Oceania",
+  "ii" = "Asia",
+  "ik" = "Asia",
+  "jv" = "Asia",
+  "kr" = "Asia",
+  "kj" = "Africa",
+  "kv" = "Europe",
+  "kw" = "Europe",
+  "la" = "Europe",
+  "lb" = "Europe",
+  "li" = "Europe",
+  "ln" = "Africa",
+  "lt" = "Europe",
+  "lv" = "Europe",
+  "mg" = "Africa",
+  "mh" = "Oceania",
+  "mi" = "Oceania",
+  "mk" = "Europe",
+  "ml" = "Asia",
+  "mn" = "Asia",
+  "mr" = "Asia",
+  "ms" = "Asia",
+  "mt" = "Europe",
+  "my" = "Asia",
+  "na" = "Oceania",
+  "nb" = "Europe",
+  "nd" = "Africa",
+  "ne" = "Asia",
+  "ng" = "Africa",
+  "nn" = "Europe",
+  "nr" = "Africa",
+  "nv" = "North America",
+  "ny" = "Africa",
+  "oc" = "Europe",
+  "oj" = "North America",
+  "om" = "Africa",
+  "or" = "Asia",
+  "os" = "Europe",
+  "pa" = "Asia",
+  "pi" = "Asia",
+  "pl" = "Europe",
+  "ps" = "Middle East",
+  "qu" = "South America",
+  "rm" = "Europe",
+  "rn" = "Africa",
+  "ro" = "Europe",
+  "ru" = "Europe",
+  "rw" = "Africa",
+  "sa" = "Asia",
+  "sc" = "Europe",
+  "sd" = "Asia",
+  "se" = "Europe",
+  "sg" = "Africa",
+  "si" = "Asia",
+  "sk" = "Europe",
+  "sl" = "Europe",
+  "sm" = "Oceania",
+  "sn" = "Africa",
+  "so" = "Africa",
+  "sq" = "Europe",
+  "sr" = "Europe",
+  "ss" = "Africa",
+  "st" = "Africa",
+  "su" = "Asia",
+  "sv" = "Europe",
+  "sw" = "Africa",
+  "ta" = "Asia",
+  "te" = "Asia",
+  "tg" = "Asia",
+  "th" = "Asia",
+  "ti" = "Africa",
+  "tk" = "Asia",
+  "tl" = "Asia",
+  "tn" = "Africa",
+  "to" = "Oceania",
+  "tr" = "Europe",
+  "ts" = "Africa",
+  "tt" = "Asia",
+  "tw" = "Africa",
+  "ty" = "Oceania",
+  "ug" = "Asia",
+  "uk" = "Europe",
+  "ur" = "Asia",
+  "uz" = "Asia",
+  "ve" = "Africa",
+  "vi" = "Asia",
+  "vo" = "Europe",
+  "wa" = "Europe",
+  "wo" = "Africa",
+  "xh" = "Africa",
+  "yi" = "Europe",
+  "yo" = "Africa",
+  "za" = "Asia",
+  "zh" = "Asia",
+  "zu" = "Africa",
+  "cn" = "Asia",
+  "sh" = "Africa",        
+  "ca" = "North America", 
+  "af" = "Africa",        
+  "xx" = "Unknown",       
+  "cy" = "Europe",        # New addition
+  "eu" = "Europe",        # New addition
+  "ku" = "Asia",          # New addition
+  "is" = "Europe",        # New addition
+  "bo" = "Asia",          # New addition
+  "iu" = "North America", # New addition
+  "mo" = "Africa",        # New addition
+  "gn" = "Africa",        # New addition
+  "ht" = "North America", # New addition
+  "cv" = "Africa",        # New addition
+  "ce" = "Europe",        # New addition
+  "eo" = "Europe",        # New addition
+  "ks" = "Asia",          # New addition
+  "kl" = "Africa",        # New addition
+  "ki" = "Africa",        # New addition
+  "aa" = "Africa",        # New addition
+  "hz" = "Africa"         # New addition
+)
+
+
+
+# Create the region column based on the mapping
+data$region <- language_to_region[data$original_language]
+data <- data %>% filter(region!='Unknown')
+```
+```{r}
+sum(is.na(data$region))
+```
+```{r}
+# Create boxplots for each region and arrange them in a grid
+ggplot(data, aes(x = region, y = popularity)) +
+  geom_boxplot(fill = "lightblue", color = "black", outlier.colour = "red", outlier.shape = 1) +  # Customize boxplot appearance
+  coord_flip() +  # Flip the coordinates for better readability  # Arrange plots by region in 2 columns
+  labs(x = 'Region',
+       y = 'Popularity',
+       title = 'Boxplot of Popularity by Region') +
+  theme_minimal() +  # Use a minimal theme for cleaner appearance
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better readability
+        strip.text.x = element_text(size = 10, face = "bold"),  # Adjust facet label text size and style
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"))  # Center and style the title
+```
+```{r}
+# Define the function to handle outliers
+handle_outliers <- function(data, budget_col, region_col) {
+  data_cleaned <- data %>%
+    group_by(!!sym(region_col)) %>%
+    mutate(
+      Q1 = quantile(!!sym(budget_col), 0.15, na.rm = TRUE),
+      Q3 = quantile(!!sym(budget_col), 0.85, na.rm = TRUE),
+      IQR = Q3 - Q1,
+      lower_bound = Q1 - 1.5 * IQR,
+      upper_bound = Q3 + 1.5 * IQR,
+      is_outlier = !!sym(budget_col) < lower_bound | !!sym(budget_col) > upper_bound
+    ) %>%
+    ungroup()
+  
+  # Option 1: Remove outliers
+  # data_cleaned <- data_cleaned %>%
+  #   filter(!is_outlier)
+  
+  # Option 2: Cap outliers (uncomment if you prefer this option)
+  data_cleaned <- data_cleaned %>%
+    mutate(
+      !!budget_col := ifelse(!!sym(budget_col) < lower_bound, lower_bound, !!sym(budget_col)),
+      !!budget_col := ifelse(!!sym(budget_col) > upper_bound, upper_bound, !!sym(budget_col))
+    )
+  
+  # Option 3: Replace outliers with the median of the region (uncomment if you prefer this option)
+  # data_cleaned <- data_cleaned %>%
+  #   group_by(!!sym(region_col)) %>%
+  #   mutate(
+  #     !!budget_col := ifelse(is_outlier, median(!!sym(budget_col), na.rm = TRUE), !!sym(budget_col))
+  #   ) %>%
+  #   ungroup()
+  
+  return(data_cleaned)
+}
+```
+```{r}
+data_cleaned <- handle_outliers(data, 'popularity', 'region')
+```
+```{r}
+
+```
+```{r}
+ggplot(data_cleaned, aes(x = region, y = popularity)) +
+  geom_boxplot(fill = "lightblue", color = "black", outlier.colour = "red", outlier.shape = 1) +  # Customize boxplot appearance
+  coord_flip() +  # Flip the coordinates for better readability  # Arrange plots by region in 2 columns
+  labs(x = 'Region',
+       y = 'Popularity',
+       title = 'Boxplot of Popularity by Region') +
+  theme_minimal() +  # Use a minimal theme for cleaner appearance
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better readability
+        strip.text.x = element_text(size = 10, face = "bold"),  # Adjust facet label text size and style
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"))  # Center and style the title
+```
+```{r}
+data$pop_out <- data_cleaned$popularity
+```
+
+```{r}
+setwd('C://Users//Sabyr//Documents')
+# Save the imputed dataset as a CSV file
+write.csv(data, file = "data_8_2.csv", row.names = FALSE)
+```
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
