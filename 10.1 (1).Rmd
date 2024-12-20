@@ -1,0 +1,162 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+# Install and load necessary libraries
+# install.packages("Amelia")
+# install.packages("caret")
+# install.packages("pROC")
+
+library(tidyverse)
+library(Amelia)
+library(caret)
+library(pROC)
+
+```
+
+```{r}
+# Load data
+df <- read.csv(file.choose())
+```
+
+```{r}
+# View data dimensions
+print(dim(df))
+```
+
+```{r}
+# Check for missing values
+missmap(df, col = c("red", "green"))
+```
+
+```{r}
+# Remove rows with missing values
+df <- drop_na(df)
+```
+
+```{r}
+# Check for missing values after removal
+missmap(df, col = c("red", "green"))
+```
+
+```{r}
+# View data format, number of rows and columns, and the first values
+glimpse(df)
+```
+
+```{r}
+# Select desired columns
+df_selected <- select(df, -title, -genres, -production_countries, -release_date)
+```
+
+```{r}
+# Shuffle the dataframe by rows
+df_shuffled <- df_selected[sample(1:nrow(df_selected)), ]
+head(df_shuffled)
+dim(df_shuffled)
+```
+
+```{r}
+# Split data into training and testing sets (70% training, 30% testing)
+dt <- sort(sample(nrow(df_shuffled), nrow(df_shuffled) * 0.7))
+train <- df_shuffled[dt, ]
+test <- df_shuffled[-dt, ]
+print(dim(train))
+print(dim(test))
+```
+
+```{r}
+# Encode categorical variables
+train$status <- factor(train$status)
+test$status <- factor(test$status, levels = levels(train$status))
+train$status <- as.integer(train$status)
+test$status <- as.integer(test$status)
+
+train$original_language <- factor(train$original_language)
+test$original_language <- factor(test$original_language, levels = levels(train$original_language))
+train$original_language <- as.integer(train$original_language)
+test$original_language <- as.integer(test$original_language)
+```
+
+```{r}
+# Create dummy variables (one-hot encoding) from the training data
+dummies_train <- dummyVars(~ ., data = train)
+train_encoded <- predict(dummies_train, newdata = train)
+train_encoded <- data.frame(train_encoded)
+```
+
+```{r}
+# Apply the same encoding to the test data
+test_encoded <- predict(dummies_train, newdata = test)
+test_encoded <- data.frame(test_encoded)
+
+print(train_encoded)
+print(test_encoded)
+View(train_encoded)
+```
+
+```{r}
+# Fit linear regression model
+model <- lm(vote_average ~ ., data = train_encoded)
+```
+
+```{r}
+# Summarize the model
+summary(model)
+```
+
+```{r}
+# Fit model with selected variables
+model <- lm(vote_average ~ vote_count + revenue + runtime + budget, data = train_encoded)
+```
+
+```{r}
+# Summarize the model
+summary(model)
+```
+
+```{r}
+# Predict values for the test data
+predictions <- predict(model, newdata = test_encoded)
+```
+
+```{r}
+# View first few predictions
+head(predictions)
+```
+
+```{r}
+# Calculate accuracy
+accuracy <- mean(predictions == test$vote_average)
+accuracy
+```
+
+```{r}
+# Confusion matrix
+table(Predicted = predictions, Actual = test$vote_average)
+```
+
+```{r}
+# ROC curve
+roc_curve <- roc(test$vote_average, predictions)
+plot(roc_curve)
+```
+
+```{r}
+# Combine training and test data
+train_test <- rbind(train, test)
+```
+
+```{r}
+# Perform 10-fold cross-validation for linear regression
+train_control <- trainControl(method = "cv", number = 10)
+cv_model <- train(vote_average ~ vote_count + revenue + runtime + budget, data = train_test, method = "lm", trControl = train_control)
+```
+
+```{r}
+# View cross-validation results
+print(cv_model)
+cv_results <- cv_model$results
+print(cv_results)
+```
